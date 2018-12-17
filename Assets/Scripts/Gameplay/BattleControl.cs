@@ -155,20 +155,16 @@ namespace Gameplay {
 					}
 					battleStageChanged = false;
 
-					//After patching the RTS bug, the getMove function will now return null if no move should be made.
+					//The getMove function returns null if no move should be made,
+					//possibly in the event of the selection loop being interrupted by a manually ended turn
 					Move move = await level.characters[currentCharacter].getMove();
-
+					//Since no move occurs, nothing else needs to be done this turn (since nothing changed).
 					if (move == null) {
-						//A null move will be returned if the selection loop is interrupted by an ending turn.
-						//Since no move occurs, nothing else needs to be done this turn (since nothing changed).
 						break;
 					}
 
 					Unit ourUnit = battlefield.units[move.from.x, move.from.y];
 
-					//The unit sometimes would no longer be in its expected position before the RTS bug was patched,
-					//but this bug might no longer occur, so this check might be unnecessary. It doesn't hurt to leave it in,
-					//since the behavior is the same: either this loop terminates due to a break, or due to an exception.
 					if (ourUnit == null) {
 						Debug.LogWarning("In BattleControl.update(), a move originated from a nonexistent unit, probably due to an ended turn.");
 						break;
@@ -223,17 +219,19 @@ namespace Gameplay {
 						Debug.LogWarning("Item of unrecognized type clicked on.");
 					}
 
-					// checkWinAndLose();
 
 					ourUnit.hasMovedThisTurn = true;
 
 					await runAppropriateCutscenes();
 
+					//Check if we eliminated the last unit.
+					await checkWinAndLose();
+
 					// Update AI capture point if Intercept mission
 					if (objective is InterceptObjective) {
 						foreach (Character c in level.characters) {
-							if (c.agent is defendAgent) {
-								(c.agent as defendAgent).capturePoint = battlefield.getUnitCoords((objective as InterceptObjective).vips[0]);
+							if (c.agent is DefendAgent) {
+								(c.agent as DefendAgent).capturePoint = battlefield.getUnitCoords((objective as InterceptObjective).vips[0]);
 							}
 						}
 					}
@@ -274,7 +272,7 @@ namespace Gameplay {
 						unit.setHasAttackedThisTurn(false);
 					}
 
-					bool endGame = checkWinAndLose();
+					bool endGame = await checkWinAndLose();
 					if (!endGame) {
 						advanceBattleStage();
 					}
@@ -285,13 +283,13 @@ namespace Gameplay {
 			}
 		}
 
-		private bool checkWinAndLose() {
+		private async Task<bool> checkWinAndLose() {
 			if (objective.isWinCondition(halfTurnsElapsed) || Input.GetKey(KeyCode.P)) {
-				advanceCampaign();
+				await advanceCampaign();
 				return true;
 
 			} else if (objective.isLoseCondition(halfTurnsElapsed)) {
-				restartLevelDefeat();
+				await restartLevelDefeat();
 				return true;
 			} else {
 				return false;
@@ -312,7 +310,7 @@ namespace Gameplay {
 			}
 		}
 
-		private async void advanceCampaign() {
+		private async Task advanceCampaign() {
 			victoryImage.enabled = true;
 			Audio.playSound("Victory", false, false);
 			await Task.Delay(TimeSpan.FromMilliseconds(6000));
@@ -332,7 +330,7 @@ namespace Gameplay {
 			}
 		}
 
-		private async void restartLevelDefeat() {
+		private async Task restartLevelDefeat() {
 			defeatImage.enabled = true;
 			await Task.Delay(TimeSpan.FromMilliseconds(6000));
 			victoryImage.enabled = false;
@@ -347,7 +345,7 @@ namespace Gameplay {
 
 			//hack demo is in 15 hours i'm so tired let me sleep
 			Vector3 offset = new Vector3(0, -2.2f, 0);
-			if (unitType == UnitType.LightHorse) {
+			if (unitType == UnitType.LightHorse || unitType == UnitType.HeavyHorse) {
 				offset += new Vector3(0, -0.8f, 0);
 			}
 
@@ -373,7 +371,7 @@ namespace Gameplay {
 
 			//hack demo is in 15 hours i'm so tired let me sleep
 			Vector3 offset = new Vector3(0, -2.2f, 0);
-			if (unit is LightHorse) {
+			if (unit is LightHorse || unit is HeavyHorse) {
 				offset += new Vector3(0, -0.8f, 0);
 			}
 			endPos += offset;
@@ -548,8 +546,8 @@ namespace Gameplay {
 						Unit unit = battlefield.units[pos.x, pos.y];
 						(objective as InterceptObjective).vips.Add(unit);
 						foreach (Character c in level.characters) {
-							if (c.agent is defendAgent) {
-								(c.agent as defendAgent).VIPs.Add(unit);
+							if (c.agent is DefendAgent) {
+								(c.agent as DefendAgent).VIPs.Add(unit);
 							}
 						}
 						Instantiate(vipCrownPrefab, unit.transform.position + new Vector3(0, 3, 0), vipCrownPrefab.transform.rotation, unit.transform);
@@ -559,6 +557,11 @@ namespace Gameplay {
 				case ObjectiveType.Capture:
 					objective = new CaptureObjective(battlefield, level, level.characters[playerCharacter], 30, goalPositions, 2);
 					foreach (Coord pos in goalPositions) {
+						foreach (Character c in level.characters) {
+							if (c.agent is DefendAgent) {
+								(c.agent as DefendAgent).capturePoint = pos;
+							}
+						}
 						Instantiate(vipCrownPrefab,
 							battlefield.map[pos.x, pos.y].Peek().transform.position + new Vector3(0, 3, 0),
 							vipCrownPrefab.transform.rotation,
@@ -589,10 +592,10 @@ namespace Gameplay {
 			if (Persistence.campaign == null && Application.isEditor) {
 				Character[] characters = new[] {
 					new Character("Alice", true, new PlayerAgent()),
-					new Character("The evil lord zxqv", false, new defendAgent(new Coord(3,7)))
+					new Character("The evil lord zxqv", false, new DefendAgent(new Coord(3,7)))
 				};
 
-				level = new Level("CraterCenter", "8", characters, new Cutscene[] { });
+				level = new Level("CraterCenter", "NewUnitsTest", characters, new Cutscene[] { });
 				Persistence.campaign = new Campaign("test", 0, new[] { level });
 				// cutscene.startCutscene("tutorialEnd");
 			}

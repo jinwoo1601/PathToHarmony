@@ -8,12 +8,15 @@ using UnityEngine;
 using Constants;
 
 namespace AI {
-	public class defendAgent : Agent {
+	public class DefendAgent : Agent {
 
 		public Coord capturePoint;
 		public List<Unit> VIPs;
 
-		public defendAgent(Coord capturePoint) : base() {
+		//Capture points may not be known at instantiation time. They must be assigned at some point before getMove is called.
+		public DefendAgent() : this(new Coord(0,0)) {}
+
+		public DefendAgent(Coord capturePoint) : base() {
 			this.capturePoint = capturePoint;
 			this.VIPs = new List<Unit>();
 		}
@@ -51,7 +54,7 @@ namespace AI {
 			}
 
 			if (VIPs.Contains(curUnit)) {
-				Debug.Log("VIP");
+				// Debug.Log("VIP");
 				// Evade
 				HashSet<Coord> dangerZone = enemyAttackZone(enemies);
 				HashSet<Coord> safeZone = safeMoves(unitCoord, dangerZone);
@@ -199,7 +202,7 @@ namespace AI {
 						foreach (Coord target in targets) {
 							Tile enemyTile = battlefield.map[target.x, target.y].Peek();
 							Unit enemy = battlefield.units[target.x, target.y];
-							AIBattle battle = new AIBattle(curUnit, enemy, enemyTile, target);
+							AIBattle battle = new AIBattle(curUnit, enemy, enemyTile, target, battlefield);
 							if (battle.score > bestScore) {
 								bestScore = battle.score;
 								bestTarget = target;
@@ -257,7 +260,7 @@ namespace AI {
 						foreach (Coord target in targets) {
 							Tile enemyTile = battlefield.map[target.x, target.y].Peek();
 							Unit enemy = battlefield.units[target.x, target.y];
-							AIBattle battle = new AIBattle(curUnit, enemy, enemyTile, target);
+							AIBattle battle = new AIBattle(curUnit, enemy, enemyTile, target, battlefield);
 							if (battle.score > bestScore) {
 								bestScore = battle.score;
 								bestTarget = target;
@@ -288,7 +291,7 @@ namespace AI {
 						foreach (Coord target in targets) {
 							Tile enemyTile = battlefield.map[target.x, target.y].Peek();
 							Unit enemy = battlefield.units[target.x, target.y];
-							AIBattle battle = new AIBattle(curUnit, enemy, enemyTile, target);
+							AIBattle battle = new AIBattle(curUnit, enemy, enemyTile, target, battlefield);
 							if (battle.score > bestScore) {
 								bestScore = battle.score;
 								bestTarget = target;

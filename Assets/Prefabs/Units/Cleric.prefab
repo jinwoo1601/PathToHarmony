@@ -117,7 +117,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1629421154834734}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 25cfc8ed9e795444cbf91112421e416e, type: 3}
+  m_Script: {fileID: 11500000, guid: 9897530dc474b794a8a156a443e36062, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   hasMovedThisTurn: 0
@@ -200,7 +200,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   healthBar: {fileID: 114738306655082024}
-  unitModelPrefab: {fileID: 1651935608516630, guid: 3a07225a64530e9459a8c85e271d9afd,
+  unitModelPrefab: {fileID: 1456589552528498, guid: dc145549bbea5b74ca2f8a7a2ce3e04a,
     type: 2}
   unit: {fileID: 114064902006437736}
 --- !u!114 &114596612612201020
